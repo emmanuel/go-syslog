@@ -15,8 +15,9 @@ import (
 type Format int
 
 const (
-	RFC3164 Format = 1 + iota // RFC3164: http://www.ietf.org/rfc/rfc3164.txt
-	RFC5424                   // RFC5424: http://www.ietf.org/rfc/rfc5424.txt
+	Passthru Format = 1 + iota // Raw passthrough. Assume messages framed on "\n"
+	RFC3164                    // RFC3164: http://www.ietf.org/rfc/rfc3164.txt
+	RFC5424                    // RFC5424: http://www.ietf.org/rfc/rfc5424.txt
 )
 
 type Server struct {
@@ -200,6 +201,8 @@ func (self *Server) parser(line []byte) {
 	var parser syslogparser.LogParser
 
 	switch self.format {
+	case Passthru:
+		parser = self.getParserPassthru(line)
 	case RFC3164:
 		parser = self.getParserRFC3164(line)
 	case RFC5424:
@@ -211,6 +214,10 @@ func (self *Server) parser(line []byte) {
 	}
 
 	go self.handler.Handle(parser.Dump(), int64(len(line)), err)
+func (self *Server) getParserPassthru(line []byte) *PassthruParser {
+	parser := NewPassthruParser(line)
+
+	return parser
 }
 
 func (self *Server) getParserRFC3164(line []byte) *rfc3164.Parser {
