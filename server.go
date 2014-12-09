@@ -211,9 +211,12 @@ func (self *Server) parser(line []byte) {
 
 	if err := parser.Parse(); err != nil {
 		self.lastError = err
+		go self.handler.Handle(parser.Dump(), int64(len(line)), err)
+	} else {
+		go self.handler.Handle(parser.Dump(), int64(len(line)), nil)
 	}
+}
 
-	go self.handler.Handle(parser.Dump(), int64(len(line)), err)
 func (self *Server) getParserPassthru(line []byte) *PassthruParser {
 	parser := NewPassthruParser(line)
 
